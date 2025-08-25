@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Album Poster Maker</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f4f4f9;
+      margin: 0;
+      padding: 20px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 20px;
+      color: #333;
+    }
+
+    .search-container {
+      position: relative;
+      width: 400px;
+      margin: 0 auto 20px auto;
+    }
+
+    #albumInput {
+      width: 100%;
+      padding: 10px;
+      font-size: 16px;
+      border: 2px solid #ccc;
+      border-radius: 6px;
+    }
+
+    #suggestions {
+      position: absolute;
+      top: 100%;
+      left: 0;
+      right: 0;
+      background: white;
+      border: 1px solid #ddd;
+      border-radius: 6px;
+      max-height: 200px;
+      overflow-y: auto;
+      z-index: 1000;
+      display: none;
+    }
+
+    #suggestions div {
+      padding: 10px;
+      cursor: pointer;
+      border-bottom: 1px solid #eee;
+    }
+
+    #suggestions div:hover {
+      background: #f0f0f0;
+    }
+
+    .options {
+      margin-bottom: 16px;
+    }
+
+    canvas {
+      margin-top: 20px;
+      border: 1px solid #ddd;
+      border-radius: 8px;
+      background: #fff;
+    }
+
+    button {
+      padding: 8px 12px;
+      border: none;
+      border-radius: 6px;
+      background: #444;
+      color: white;
+      cursor: pointer;
+      margin: 4px;
+    }
+
+    button:hover {
+      background: #666;
+    }
+  </style>
+</head>
+
+<body>
+  <h1>Album Poster Maker</h1>
+
+  <div class="search-container">
+    <input type="text" id="albumInput" placeholder="Digite o nome do álbum..." autocomplete="off">
+    <div id="suggestions"></div>
+  </div>
+  <button id="searchBtn">Buscar</button>
+
+  <div class="options">
+    <label for="paperFormat">Formato:</label>
+    <select id="paperFormat">
+      <option value="A0">A0</option>
+      <option value="A1">A1</option>
+      <option value="A2">A2</option>
+      <option value="A3">A3</option>
+      <option value="A4" selected>A4</option>
+      <option value="A5">A5</option>
+      <option value="A6">A6</option>
+    </select>
+
+    <label for="templateSelect" style="margin-left: 12px;">Template:</label>
+    <select id="templateSelect">
+      <option value="1" selected>Template 1</option>
+      <option value="2">Template 2</option>
+    </select>
+
+    <button id="pdfBtn" style="margin-left: 12px;">Exportar PDF</button>
+  </div>
+
+  <canvas id="posterPreview" width="600" height="848"></canvas>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/color-thief/2.3.2/color-thief.umd.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script type="module" src="{{ url_for('static', filename='main.js') }}"></script>
+</body>
+
+</html>
