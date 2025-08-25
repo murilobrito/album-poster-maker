@@ -2,10 +2,24 @@ import { getCanvasSize, getPaperSizeMM } from './helpers.js';
 import { drawPosterTemplate1 } from './posterTemplate1.js';
 import { drawPosterTemplate2 } from './posterTemplate2.js';
 
+/**
+ * Stores the last fetched album data.
+ * @type {Object|null}
+ */
 let lastAlbum = null;
+
+/**
+ * Stores rendering/export options.
+ * Default: A4 portrait, 300dpi, template 1.
+ * @type {Object}
+ */
 let lastOpts = { format: 'A4', orientation: 'portrait', dpi: 300, template: 1 };
 
-// === BUSCA PRINCIPAL ===
+/**
+ * === ALBUM SEARCH ===
+ * Fetches album data from the backend by user input query.
+ * Updates `lastAlbum`, syncs options from UI, and triggers render.
+ */
 async function searchAlbum() {
   const query = document.getElementById('albumInput').value.trim();
   if (!query) return;
@@ -19,7 +33,7 @@ async function searchAlbum() {
 
     const data = await res.json();
     if (!res.ok) {
-      alert(data?.error || 'Álbum não encontrado');
+      alert(data?.error || 'Album not found');
       return;
     }
 
@@ -28,22 +42,33 @@ async function searchAlbum() {
     renderCurrent();
   } catch (err) {
     console.error(err);
-    alert('Erro ao buscar álbum.');
+    alert('Error while searching album.');
   }
 }
 
-// === OPÇÕES (sem orientação) ===
+/**
+ * === OPTIONS (without orientation toggle, always portrait) ===
+ * Reads current UI options (paper format and template) and
+ * updates global `lastOpts` configuration.
+ */
 function updateOptsFromUI() {
   const format = document.getElementById('paperFormat').value;
   const template = parseInt(document.getElementById('templateSelect').value, 10);
   lastOpts = { format, orientation: 'portrait', dpi: 300, template };
 }
 
-// === RENDER ===
+/**
+ * === RENDER ===
+ * Renders the currently loaded album into the preview canvas,
+ * using the selected poster template.
+ *
+ * @param {Function} [callback] - Optional callback executed after render.
+ */
 function renderCurrent(callback) {
   if (!lastAlbum) return;
 
   const canvas = document.getElementById('posterPreview');
+  // Preview resolution fixed for UI (low DPI, just preview)
   canvas.width = 600;
   canvas.height = 848;
 
@@ -58,26 +83,34 @@ function renderCurrent(callback) {
   }
 }
 
-// === PDF ===
+/**
+ * === EXPORT AS PDF ===
+ * Generates a full-resolution poster (based on selected paper size & DPI),
+ * draws album poster into a temporary canvas, converts it to image,
+ * and exports as PDF using jsPDF.
+ */
 function downloadPosterAsPDF() {
   if (!lastAlbum) {
-    alert('Pesquise um álbum primeiro.');
+    alert('Please search an album first.');
     return;
   }
 
   const { jsPDF } = window.jspdf;
   const { width, height } = getCanvasSize(lastOpts.format, lastOpts.dpi, 'portrait');
 
+  // Create high-resolution off-screen canvas
   const tempCanvas = document.createElement('canvas');
   tempCanvas.width = width;
   tempCanvas.height = height;
 
+  // Render with chosen template
   if (lastOpts.template === 1) {
     drawPosterTemplate1(lastAlbum, tempCanvas);
   } else {
     drawPosterTemplate2(lastAlbum, tempCanvas);
   }
 
+  // Convert canvas to image and add to PDF
   setTimeout(() => {
     const imgData = tempCanvas.toDataURL('image/jpeg', 1.0);
     const { wmm, hmm } = getPaperSizeMM(lastOpts.format, 'portrait');
@@ -87,15 +120,22 @@ function downloadPosterAsPDF() {
       format: [wmm, hmm]
     });
     pdf.addImage(imgData, 'JPEG', 0, 0, wmm, hmm);
-    pdf.save(`album-poster-${lastOpts.format}-template${lastOpts.template}.pdf`);
+    pdf.save(`album-poster-${lastAlbum.name}.pdf`);
   }, 400);
 }
 
-// === SUGESTÕES EM TEMPO REAL ===
+/**
+ * === REAL-TIME SUGGESTIONS ===
+ * Sets up dynamic dropdown with album suggestions while typing.
+ * - Shows possible matches in a floating list below input.
+ * - Click suggestion → autofills and runs search.
+ * - Search can be triggered by pressing Enter or Search button.
+ */
 function setupSuggestions() {
   const input = document.getElementById("albumInput");
   const suggestionsBox = document.getElementById("suggestions");
 
+  // On typing → fetch suggestions
   input.addEventListener("input", async () => {
     const query = input.value.trim();
     if (query.length < 2) {
@@ -132,23 +172,26 @@ function setupSuggestions() {
     }
   });
 
-  // Buscar com Enter
+  // Search on Enter key
   input.addEventListener("keypress", e => {
     if (e.key === "Enter") searchAlbum();
   });
 
-  // Buscar com botão
+  // Search on button click
   document.getElementById("searchBtn").addEventListener("click", searchAlbum);
 }
 
-// === EVENTOS ===
+/**
+ * === EVENTS ===
+ * PDF export button → refresh options, re-render, then export as PDF.
+ */
 document.getElementById('pdfBtn').addEventListener('click', () => {
   updateOptsFromUI();
   renderCurrent(() => downloadPosterAsPDF());
 });
 
-// Inicializar sugestões
+// Initialize suggestions on page load
 setupSuggestions();
 
-// Expor para fora (se precisar)
+// Expose search function globally (optional external access)
 window.searchAlbum = searchAlbum;
